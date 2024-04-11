@@ -6,10 +6,10 @@ let url = "https://deckofcardsapi.com/api/deck";
 
 const Deck = () => {
   const deck_id = useRef();
-  const [remaining, setRemaining] = useState(null);
-  const [cards, setCards] = useState([]);
-  //   const timerId = useRef();
-  //   const [drawing, setDrawing] = useState(false);
+  let [remaining, setRemaining] = useState(null);
+  let [cards, setCards] = useState([]);
+  const timerId = useRef();
+  const [drawing, setDrawing] = useState(false);
 
   useEffect(() => {
     async function loadDeck() {
@@ -19,49 +19,42 @@ const Deck = () => {
       setCards([]);
     }
     loadDeck();
-    // return () => {
-    //   clearInterval(timerId.current);
-    // };
   }, []);
 
-  const addCards = async () => {
+  // const addCards = async () => {
+  //   if (remaining) {
+  //     const res = await axios.get(`${url}/${deck_id.current}/draw/?count=1`);
+  //     setRemaining(res.data.remaining);
+  //     const newCards = [res.data.cards[0], ...cards];
+  //     setCards(newCards);
+  //   } else {
+  //     alert("NO CARDS LEFT");
+  //   }
+  // };
+
+  const startDrawing = () => {
     if (remaining) {
-      const res = await axios.get(`${url}/${deck_id.current}/draw/?count=1`);
-      setRemaining(res.data.remaining);
-      const newCards = [res.data.cards[0], ...cards];
-      setCards(newCards);
+      setDrawing(true);
+      timerId.current = setInterval(async () => {
+        const res = await axios.get(`${url}/${deck_id.current}/draw/?count=1`);
+        if (res.data.cards.length) {
+          setRemaining(res.data.remaining);
+          setCards((prev) => {
+            return [res.data.cards[0], ...prev];
+          });
+        } else {
+          stopDrawing();
+        }
+      }, 1000);
     } else {
-      alert("NO CARDS LEFT");
+      alert("NO MORE CARDS");
     }
   };
 
-  //   const startDrawing = () => {
-  //     setDrawing(true);
-  //     // console.log(deck_id);
-
-  //     timerId.current = setInterval(async () => {
-  //       if (remaining) {
-  //         const res = await axios.get(`${url}/${deck_id.current}/draw/?count=1`);
-  //         console.log(res.data.cards[0]);
-
-  //         // setRemaining(res.data.remaining);
-  //         setRemaining((remaining) => remaining - 1);
-  //         const newCards = [res.data.cards[0], ...cards];
-  //         console.log(newCards);
-  //         setCards(newCards);
-  //         console.log(remaining);
-  //         console.log(cards);
-  //       } else {
-  //         setDrawing(false);
-  //         clearInterval(timerId.current);
-  //       }
-  //     }, 100);
-  //   };
-
-  //   const stopDrawing = () => {
-  //     setDrawing(false);
-  //     clearInterval(timerId.current);
-  //   };
+  const stopDrawing = () => {
+    setDrawing(false);
+    clearInterval(timerId.current);
+  };
 
   const shuffleDeck = async () => {
     const res = await axios.get(`${url}/${deck_id.current}/shuffle/`);
@@ -78,21 +71,21 @@ const Deck = () => {
           ""
         )}
       </div>
-
+      {/* 
       {remaining ? (
         <button className="btn" onClick={addCards}>
           Draw a Card
         </button>
       ) : (
         ""
-      )}
+      )} */}
 
       {/*Further Study*/}
-      {/* <button className="btn" onClick={!drawing ? startDrawing : stopDrawing}>
+      <button className="btn" onClick={!drawing ? startDrawing : stopDrawing}>
         {!drawing ? "Start Drawing" : "Stop Drawing"}
-      </button> */}
+      </button>
 
-      {!remaining ? (
+      {!drawing ? (
         <button className="btn" onClick={shuffleDeck}>
           Shuffle Deck
         </button>
